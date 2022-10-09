@@ -29,39 +29,82 @@ use ieee.std_logic_1164.all;
 
 entity debounce is
     generic (
-        clk_freq    : integer := 50_000_000; --system clock frequency in Hz
-        stable_time : integer := 10);        --time button must remain stable in ms
+        clk_freq    : integer := 4; --50_000_000; --system clock frequency in Hz
+        stable_time : integer := 1;         --time button must remain stable in ms
+        input_width : integer := 4);
     port (
-        clk     : in std_logic;   --input clock
-        rst : in std_logic;   --asynchronous active low reset
-        button  : in std_logic;   --input signal to be debounced
-        result  : out std_logic); --debounced signal
+        clk     : in std_logic;   
+        rst : in std_logic;   
+        button  : in std_logic_vector(input_width-1 downto 0);   
+        continuous_result  : out std_logic_vector(input_width-1 downto 0);
+        pulse_result : out std_logic
+        ); 
 end debounce;
 
 architecture logic of debounce is
-    signal flipflops   : std_logic_vector(1 downto 0); --input flip flops
-    signal counter_set : std_logic;                    --sync reset to zero
-begin
+    signal flipflop0   : std_logic_vector(input_width-1 downto 0);
+    signal flipflop1   : std_logic_vector(input_width-1 downto 0);
+    signal pulse_reg0 : std_logic;
+    signal pulse_reg1 : std_logic;
+    signal continuous_result_reg : std_logic_vector(input_width-1 downto 0);
+    signal pulse_result_reg : std_logic;
+    signal counter_set : std_logic;             
 
-    counter_set <= flipflops(0) xor flipflops(1); --determine when to start/reset counter
+    constant MAX_COUNT: integer := clk_freq * stable_time; --/1000; --counter for timing
+    signal count : integer range 0 to MAX_COUNT; 
+    signal en_counter : std_logic;
+    
+  
+begin
+    counter_set <= '1' when flipflop0 /= flipflop1 else '0'; --determine when to start/reset counter
 
     process (clk, rst)
-        variable count : integer range 0 to clk_freq * stable_time/1000; --counter for timing
+        
     begin
-        if (rst = '1') then                          --reset
-            flipflops(1 downto 0) <= "00";                   --clear input flipflops
-            result                <= '0';                    --clear result register
-        elsif (clk'EVENT and clk = '1') then             --rising clock edge
-            flipflops(0) <= button;                          --store button value in 1st flipflop
-            flipflops(1) <= flipflops(0);                    --store 1st flipflop value in 2nd flipflop
-            if (counter_set = '1') then                      --reset counter because input is changing
-                count := 0;                                      --clear the counter
-            elsif (count < clk_freq * stable_time/1000) then --stable input time is not yet met
-                count := count + 1;                              --increment counter
-            else                                             --stable input time is met
-                result <= flipflops(1);                          --output the stable value
+        if (rst = '1') then              
+            flipflop0 <= (others => '0');
+            flipflop1 <= (others => '0');
+            pulse_reg0 <= '0'; 
+            pulse_reg1 <= '0';
+            count <= 0;
+            en_counter <= '0';
+            continuous_result_reg <= (others => '0'); 
+            pulse_result_reg <= '0';
+            
+        elsif (clk'EVENT and clk = '1') then             
+            
+            flipflop0 <= button;                         
+            flipflop1 <= flipflop0;                    
+            
+            if (counter_set = '1') then                
+                count <= 0;
+                en_counter <= '1'; 
+                continuous_result_reg <= (others=>'0');
+                pulse_result_reg <= '0';
+                pulse_reg0 <= '0';
+            
+            elsif (count < MAX_COUNT AND en_counter = '1') then 
+                count <= count + 1;
+                if (count = MAX_COUNT-1) then
+                    pulse_reg0 <= '1';
+                else                          
+                    pulse_reg0 <= '0';
+                end if;
+            elsif  (count = MAX_COUNT) then                
+                en_counter <= '0';                          
+                continuous_result_reg <= flipflop1;
+                pulse_reg1 <= pulse_reg0;          
+                pulse_result_reg <= pulse_reg0 and (not pulse_reg1);
+            
+            else
+                continuous_result_reg <= continuous_result_reg;
+                pulse_result_reg <= pulse_result_reg;
+                
             end if;
         end if;
     end process;
+
+continuous_result <= continuous_result_reg;
+pulse_result <= pulse_result_reg;
 
 end logic;
