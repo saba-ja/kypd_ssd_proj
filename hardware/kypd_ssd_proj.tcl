@@ -17,7 +17,6 @@ if { [info exists ::user_project_name] } {
 variable script_file
 set script_file "kypd_ssd_proj.tcl"
 
-
 # Set the directory path for the original project from where this script was exported
 set orig_proj_dir "[file normalize "$origin_dir/kypd_ssd_proj"]"
 
@@ -41,7 +40,8 @@ set_property -name "revised_directory_structure" -value "1" -objects $obj
 set_property -name "sim.central_dir" -value "$proj_dir/${_xil_proj_name_}.ip_user_files" -objects $obj
 set_property -name "sim.ip.auto_export_scripts" -value "1" -objects $obj
 set_property -name "simulator_language" -value "Mixed" -objects $obj
-set_property -name "webtalk.xsim_launch_sim" -value "1" -objects $obj
+set_property -name "source_mgmt_mode" -value "DisplayOnly" -objects $obj
+set_property -name "webtalk.xsim_launch_sim" -value "29" -objects $obj
 
 # Create 'sources_1' fileset (if not found)
 if {[string equal [get_filesets -quiet sources_1] ""]} {
@@ -53,8 +53,9 @@ set obj [get_filesets sources_1]
 set files [list \
  [file normalize "${origin_dir}/src/Decoder.vhd"] \
  [file normalize "${origin_dir}/src/DisplayController.vhd"] \
- [file normalize "${origin_dir}/src/debounce.vhd"] \
  [file normalize "${origin_dir}/src/PmodKYPD.vhd"] \
+ [file normalize "${origin_dir}/src/debounce.vhd"] \
+ [file normalize "${origin_dir}/src/number_select.vhd"] \
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -69,12 +70,17 @@ set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "VHDL" -objects $file_obj
 
+set file "$origin_dir/src/PmodKYPD.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+
 set file "$origin_dir/src/debounce.vhd"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "VHDL" -objects $file_obj
 
-set file "$origin_dir/src/PmodKYPD.vhd"
+set file "$origin_dir/src/number_select.vhd"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "VHDL" -objects $file_obj
@@ -86,6 +92,7 @@ set_property -name "file_type" -value "VHDL" -objects $file_obj
 # Set 'sources_1' fileset properties
 set obj [get_filesets sources_1]
 set_property -name "top" -value "PmodKYPD" -objects $obj
+set_property -name "top_auto_set" -value "0" -objects $obj
 
 # Create 'constrs_1' fileset (if not found)
 if {[string equal [get_filesets -quiet constrs_1] ""]} {
@@ -105,3 +112,37 @@ set_property -name "file_type" -value "XDC" -objects $file_obj
 
 # Set 'constrs_1' fileset properties
 set obj [get_filesets constrs_1]
+
+# Create 'sim_1' fileset (if not found)
+if {[string equal [get_filesets -quiet sim_1] ""]} {
+  create_fileset -simset sim_1
+}
+
+# Set 'sim_1' fileset object
+set obj [get_filesets sim_1]
+set files [list \
+ [file normalize "${origin_dir}/src/get_diff_tb.vhd"] \
+ [file normalize "${origin_dir}/src/bin_to_int.vhd"] \
+]
+add_files -norecurse -fileset $obj $files
+
+# Set 'sim_1' fileset file properties for remote files
+set file "$origin_dir/src/get_diff_tb.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+
+set file "$origin_dir/src/bin_to_int.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+
+
+# Set 'sim_1' fileset file properties for local files
+# None
+
+# Set 'sim_1' fileset properties
+set obj [get_filesets sim_1]
+set_property -name "top" -value "bin_to_int" -objects $obj
+set_property -name "top_auto_set" -value "0" -objects $obj
+set_property -name "top_lib" -value "xil_defaultlib" -objects $obj

@@ -30,6 +30,6 @@ begin
                   "0111101" when "1101", --d
                   "1001111" when "1110", --E
                   "1000111" when "1111", --F
-                  "0000101" when others;
+                  "0000000" when others;
 
 end Behavioral;
