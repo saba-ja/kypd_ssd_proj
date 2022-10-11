@@ -65,6 +65,19 @@ architecture Behavioral of PmodKYPD is
                );
     end component;
     
+    component blinky is
+    Generic(
+        BLINK_COUNT: integer := 10;
+        FREQ_OUT: integer  := 4;
+        FREQ_IN: integer := 50000000
+    );
+    Port ( clk : in STD_LOGIC;
+           rst : in STD_LOGIC;
+           dis : in std_logic;
+           sig_in : in STD_LOGIC;
+           sig_out : out STD_LOGIC);
+end component;
+    
     constant clk_freq    : integer := 50_000_000; 
     constant stable_time : integer := 10;
     constant KYPD_INPUT_WIDTH : integer := 4;
@@ -107,6 +120,7 @@ architecture Behavioral of PmodKYPD is
      signal is_show_hidden_num_btn_pressed: std_logic;
      
      signal progress_status: std_logic_vector(2 downto 0);
+     signal blinking_green: std_logic;
      
      signal curr_user_input:  integer; 
      signal prev_user_input:  integer;
@@ -138,6 +152,10 @@ architecture Behavioral of PmodKYPD is
       end function;
       
 begin
+
+    bl0: blinky generic map(BLINK_COUNT=> 10, FREQ_OUT=> 4, FREQ_IN=>clk_freq)
+            port map(clk => clk, rst => rst, dis => (progress_status(2) or progress_status(0)), 
+            sig_in => progress_status(2), sig_out => blinking_green);
 
     NM0: number_select port map(clk => clk, rst => rst, en => '1', is_max_10 => '1', 
                                 actual_num => level1_hidden_num, left_dig => level1_left_dig, right_dig => level1_right_dig);
@@ -293,7 +311,7 @@ begin
     
 
      led_r <= progress_status(2);
-     led_g <= progress_status(1); 
+     led_g <= blinking_green; 
      led_b <= progress_status(0); 
      led <= std_logic_vector(to_unsigned(prev_user_input,4));
 end Behavioral;

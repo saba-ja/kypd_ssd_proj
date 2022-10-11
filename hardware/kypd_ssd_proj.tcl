@@ -41,7 +41,7 @@ set_property -name "sim.central_dir" -value "$proj_dir/${_xil_proj_name_}.ip_use
 set_property -name "sim.ip.auto_export_scripts" -value "1" -objects $obj
 set_property -name "simulator_language" -value "Mixed" -objects $obj
 set_property -name "source_mgmt_mode" -value "DisplayOnly" -objects $obj
-set_property -name "webtalk.xsim_launch_sim" -value "29" -objects $obj
+set_property -name "webtalk.xsim_launch_sim" -value "107" -objects $obj
 
 # Create 'sources_1' fileset (if not found)
 if {[string equal [get_filesets -quiet sources_1] ""]} {
@@ -56,6 +56,7 @@ set files [list \
  [file normalize "${origin_dir}/src/PmodKYPD.vhd"] \
  [file normalize "${origin_dir}/src/debounce.vhd"] \
  [file normalize "${origin_dir}/src/number_select.vhd"] \
+ [file normalize "${origin_dir}/src/blinky.vhd"] \
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -81,6 +82,11 @@ set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "VHDL" -objects $file_obj
 
 set file "$origin_dir/src/number_select.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+
+set file "$origin_dir/src/blinky.vhd"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "VHDL" -objects $file_obj
@@ -123,6 +129,7 @@ set obj [get_filesets sim_1]
 set files [list \
  [file normalize "${origin_dir}/src/get_diff_tb.vhd"] \
  [file normalize "${origin_dir}/src/bin_to_int.vhd"] \
+ [file normalize "${origin_dir}/src/blinky_tb.vhd"] \
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -137,12 +144,17 @@ set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
 set_property -name "file_type" -value "VHDL" -objects $file_obj
 
+set file "$origin_dir/src/blinky_tb.vhd"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets sim_1] [list "*$file"]]
+set_property -name "file_type" -value "VHDL" -objects $file_obj
+
 
 # Set 'sim_1' fileset file properties for local files
 # None
 
 # Set 'sim_1' fileset properties
 set obj [get_filesets sim_1]
-set_property -name "top" -value "bin_to_int" -objects $obj
+set_property -name "top" -value "blinky_tb" -objects $obj
 set_property -name "top_auto_set" -value "0" -objects $obj
 set_property -name "top_lib" -value "xil_defaultlib" -objects $obj
